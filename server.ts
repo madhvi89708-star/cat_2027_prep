@@ -604,11 +604,6 @@ app.get("/api/sectional-tests", authenticateToken, async (req: any, res) => {
     let tests = await fetchSheetData("SectionalTests") || getLocalDB().sectionalTests;
  
     // Students only see tests matching their exam (or "ALL")
-    if (req.user.role === "student") {
-      tests = tests.filter(
-        (t: any) => t.targetExam === "ALL" || t.targetExam === req.user.targetExam
-      );
-    }
  
     // Attach question count without sending full questions
     const questions =
