@@ -69,7 +69,7 @@ const SHEET_CONFIG: Record<string, string[]> = {
   SectionalQuestions: ["id", "section", "questionText", "options", "correctAnswer", "explanation", "difficulty", "passageId", "targetExam"],
   SectionalPassages:  ["id", "title", "text", "targetExam"],
   SectionalResults:   ["id", "studentId", "testId", "section", "totalScore", "correctAnswers", "wrongAnswers", "skippedQuestions", "timeSpent", "studentAnswers", "scaledScore", "submittedAt"],
-   MockTests:      ["id", "name", "totalDurationMinutes", "sectionDurationMinutes", "questionIds", "passageIds", "targetExam", "publishedDate"],
+   MockTests:      ["id", "name", "totalDurationMinutes", "sectionDurationMinutes", "questionIds", "passageIds", "targetExam", "publishedDate", "studentsAttempted"],
   MockQuestions:  ["id", "section", "questionText", "options", "correctAnswer", "explanation", "difficulty", "passageId", "targetExam"],
   MockPassages:   ["id", "title", "text", "targetExam"],
   MockResults:    ["id", "studentId", "testId", "totalScore", "overallScaledScore", "percentile", "sectionResults", "studentAnswers", "timeSpent", "submittedAt"],
@@ -638,6 +638,7 @@ app.get("/api/mock-tests", authenticateToken, async (req: any, res) => {
       const qIds: string[] = Array.isArray(t.questionIds) ? t.questionIds : [];
       return {
         ...t,
+        studentsAttempted: Number(t.studentsAttempted)
         questions: questions
           .filter((q: any) => qIds.includes(q.id))
           .map((q: any) => ({ id: q.id, section: q.section })), // minimal for list view
