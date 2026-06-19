@@ -630,11 +630,6 @@ app.get("/api/mock-tests", authenticateToken, async (req: any, res) => {
     let tests =
       (await fetchSheetData("MockTests", MOCK_SPREADSHEET_ID)) || getLocalDB().mockTests;
  
-    if (req.user.role === "student") {
-      tests = tests.filter(
-        (t: any) => t.targetExam === "ALL" || t.targetExam === req.user.targetExam
-      );
-    }
  
     const questions =
       (await fetchSheetData("MockQuestions", MOCK_SPREADSHEET_ID)) || getLocalDB().mockQuestions;
