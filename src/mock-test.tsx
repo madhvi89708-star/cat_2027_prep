@@ -54,6 +54,7 @@ interface MockTest {
   questions: MockQuestion[];
   passages?: Passage[];
   publishedDate?: string;
+  studentsAttempted?: number;
 }
 
 interface SectionResult {
@@ -570,7 +571,7 @@ export default function MockTest({ user }: { user: any }) {
     👥 Students Attempted
   </span>
   <span className="font-semibold text-emerald-600">
-    {(t.studentsAttempted || 0).toLocaleString()}+
+    {(selectedTest.studentsAttempted || 0).toLocaleString()}+
   </span>
 </div>
           </CardHeader>
@@ -1049,7 +1050,7 @@ export default function MockTest({ user }: { user: any }) {
     👥 Students Attempted
   </span>
   <span className="font-semibold text-emerald-600">
-    {(t.studentsAttempted || 0).toLocaleString()}+
+    {(selectedTest.studentsAttempted || 0).toLocaleString()}+
   </span>
 </div>
           </div>
