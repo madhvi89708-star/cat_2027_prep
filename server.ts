@@ -638,7 +638,7 @@ app.get("/api/mock-tests", authenticateToken, async (req: any, res) => {
       const qIds: string[] = Array.isArray(t.questionIds) ? t.questionIds : [];
       return {
         ...t,
-        studentsAttempted: Number(t.studentsAttempted)
+        studentsAttempted: Number(t.studentsAttempted),
         questions: questions
           .filter((q: any) => qIds.includes(q.id))
           .map((q: any) => ({ id: q.id, section: q.section })), // minimal for list view
