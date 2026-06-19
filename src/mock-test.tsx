@@ -492,6 +492,14 @@ export default function MockTest({ user }: { user: any }) {
                       )}
                     </div>
                     <CardTitle className="text-base mt-2">{t.name}</CardTitle>
+<div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-border">
+  <span className="text-muted-foreground flex items-center gap-1">
+    👥 Students Attempted
+  </span>
+  <span className="font-semibold text-emerald-600">
+    {(t.studentsAttempted || 0).toLocaleString()}+
+  </span>
+</div>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex gap-4 text-xs text-muted-foreground">
@@ -557,6 +565,14 @@ export default function MockTest({ user }: { user: any }) {
               Full Length Mock
             </div>
             <CardTitle className="text-2xl">{selectedTest.name}</CardTitle>
+            <div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-border">
+  <span className="text-muted-foreground flex items-center gap-1">
+    👥 Students Attempted
+  </span>
+  <span className="font-semibold text-emerald-600">
+    {(t.studentsAttempted || 0).toLocaleString()}+
+  </span>
+</div>
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
             <div className="grid grid-cols-3 gap-4 text-center">
@@ -1028,6 +1044,14 @@ export default function MockTest({ user }: { user: any }) {
           <div className="bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-5 text-white">
             <p className="text-sm font-bold uppercase tracking-widest opacity-80">Full Length Mock Result</p>
             <h2 className="text-2xl font-black mt-1">{selectedTest.name}</h2>
+            <div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-border">
+  <span className="text-muted-foreground flex items-center gap-1">
+    👥 Students Attempted
+  </span>
+  <span className="font-semibold text-emerald-600">
+    {(t.studentsAttempted || 0).toLocaleString()}+
+  </span>
+</div>
           </div>
           <CardContent className="pt-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
