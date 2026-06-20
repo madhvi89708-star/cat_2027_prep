@@ -66,11 +66,11 @@ const SHEET_CONFIG: Record<string, string[]> = {
   DailyTests: ["id", "testDate", "questionIds"],
   TestResults: ["id", "studentId", "testDate", "testId", "totalScore", "correctAnswers", "wrongAnswers", "skippedQuestions", "timeSpent", "sectionScores", "studentAnswers"],
    SectionalTests:   ["id", "name", "section", "durationMinutes", "questionIds", "passageIds", "targetExam", "publishedDate"],
-  SectionalQuestions: ["id", "section", "questionText", "options", "correctAnswer", "explanation", "difficulty", "passageId", "targetExam"],
+  SectionalQuestions: ["id", "section", "questionText", "questionType", "options", "correctAnswer", "answerTolerance", "explanation", "difficulty", "passageId", "targetExam"],
   SectionalPassages:  ["id", "title", "text", "targetExam"],
-  SectionalResults:   ["id", "studentId", "testId", "section", "totalScore", "correctAnswers", "wrongAnswers", "skippedQuestions", "timeSpent", "studentAnswers", "scaledScore", "submittedAt"],
+  SectionalResults:   ["id", "studentId", "testId", "section", "totalScore", "correctAnswers", "wrongAnswers", "wrongTITA", "skippedQuestions", "timeSpent", "studentAnswers", "scaledScore", "submittedAt"],
    MockTests:      ["id", "name", "totalDurationMinutes", "sectionDurationMinutes", "questionIds", "passageIds", "targetExam", "publishedDate", "studentsAttempted"],
-  MockQuestions:  ["id", "section", "questionText", "options", "correctAnswer", "explanation", "difficulty", "passageId", "targetExam"],
+  MockQuestions:  ["id", "section", "questionText", "questionType", "options", "correctAnswer", "answerTolerance", "explanation", "difficulty", "passageId", "targetExam"],
   MockPassages:   ["id", "title", "text", "targetExam"],
   MockResults:    ["id", "studentId", "testId", "totalScore", "overallScaledScore", "percentile", "sectionResults", "studentAnswers", "timeSpent", "submittedAt"],
   Announcements: ["id", "title", "content", "createdDate", "createdBy"]
@@ -107,6 +107,7 @@ async function fetchSheetData(range: string, spreadsheetId: string | undefined =
     console.log(`✅ Mapping ${dataRows.length} rows from ${range} using headers: [${headers.join(", ")}]`);
  
     const jsonFields = ["options", "questionIds", "passageIds", "sectionScores", "studentAnswers", "sectionResults"];
+    const numericFields = ["answerTolerance"];
  
     return dataRows.map(row => {
       const obj: any = {};
@@ -120,6 +121,9 @@ async function fetchSheetData(range: string, spreadsheetId: string | undefined =
             } else if (val === "") {
               val = [];
             }
+          } else if (numericFields.includes(key) && val !== "") {
+            const n = Number(val);
+            val = isNaN(n) ? undefined : n;
           }
           obj[key] = val;
         } else {
@@ -768,7 +772,12 @@ app.post("/api/mock-questions", authenticateToken, async (req: any, res) => {
   try {
     const questions: any[] = req.body.questions;
     for (const q of questions) {
-      const newQ = { ...q, id: q.id || `MQ${Date.now()}${Math.random().toString(36).substr(2, 4)}` };
+      const newQ = {
+        ...q,
+        id: q.id || `MQ${Date.now()}${Math.random().toString(36).substr(2, 4)}`,
+        questionType: q.questionType === "TITA" ? "TITA" : "MCQ",
+        options: q.questionType === "TITA" ? [] : (q.options || []),
+      };
       await appendSheetData("MockQuestions", newQ, MOCK_SPREADSHEET_ID);
       const db = getLocalDB();
       db.mockQuestions.push(newQ);
@@ -913,7 +922,12 @@ app.post("/api/sectional-questions", authenticateToken, async (req: any, res) =>
   try {
     const questions: any[] = req.body.questions;
     for (const q of questions) {
-      const newQ = { ...q, id: q.id || `SQ${Date.now()}${Math.random().toString(36).substr(2, 4)}` };
+      const newQ = {
+        ...q,
+        id: q.id || `SQ${Date.now()}${Math.random().toString(36).substr(2, 4)}`,
+        questionType: q.questionType === "TITA" ? "TITA" : "MCQ",
+        options: q.questionType === "TITA" ? [] : (q.options || []),
+      };
       await appendSheetData("SectionalQuestions", newQ);
       const db = getLocalDB();
       db.sectionalQuestions.push(newQ);
