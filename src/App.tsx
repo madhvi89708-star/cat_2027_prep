@@ -1067,6 +1067,7 @@ function DailyTest({ user }: { user: UserProfile }) {
       </div>
     </div>
   );
+}
 
 function TestHistory({ user }: { user: UserProfile }) {
   const [results, setResults] = useState<any[]>([]);
