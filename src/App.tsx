@@ -385,20 +385,10 @@ function LoginPage({ onLogin }: { onLogin: (u: UserProfile) => void }) {
 }
 
 function Dashboard({ user, setActiveTab }: { user: UserProfile, setActiveTab: (t: string) => void }) {
-  const [stats, setStats] = useState({ attempted: 0, avgScore: 0, streak: 0 });
+  const [stats, setStats] = useState({ attempted: 0, avgScore: 0 });
   const [announcements, setAnnouncements] = useState<any[]>([]);
 
-  useEffect(() => {
-    apiRequest("/performance").then(results => {
-      if (results.length > 0) {
-        const avg = results.reduce((a, b) => a + Number(b.totalScore), 0) / results.length;
-        setStats({
-          attempted: results.length,
-          avgScore: Math.round(avg),
-          streak: 3 // Mock streak
-        });
-      }
-    });
+  
     apiRequest("/announcements").then(setAnnouncements);
   }, []);
 
@@ -432,16 +422,6 @@ function Dashboard({ user, setActiveTab }: { user: UserProfile, setActiveTab: (t
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.avgScore}%</div>
-          </CardContent>
-        </Card>
-        <Card className="shadow-md">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Current Streak</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold flex items-center gap-2">
-              {stats.streak} Days 🔥
-            </div>
           </CardContent>
         </Card>
       </div>
