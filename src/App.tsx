@@ -388,9 +388,6 @@ function Dashboard({ user, setActiveTab }: { user: UserProfile, setActiveTab: (t
   const [stats, setStats] = useState({ attempted: 0, avgScore: 0 });
   const [announcements, setAnnouncements] = useState<any[]>([]);
 
-  
-    apiRequest("/announcements").then(setAnnouncements);
-  }, []);
 
   return (
     <div className="space-y-8">
@@ -407,7 +404,7 @@ function Dashboard({ user, setActiveTab }: { user: UserProfile, setActiveTab: (t
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="bg-primary text-primary-foreground border-none shadow-lg shadow-primary/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-80">Tests Attempted</CardTitle>
