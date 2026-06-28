@@ -15,6 +15,8 @@ import {
   Eye,
   Lock,
   PlayCircle,
+  ZoomIn,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,8 +51,8 @@ interface Passage {
 interface MockTest {
   id: string;
   name: string;
-  totalDurationMinutes: number; // usually 120
-  sectionDurationMinutes: number; // usually 40 per section
+  totalDurationMinutes: number;
+  sectionDurationMinutes: number;
   questions: MockQuestion[];
   passages?: Passage[];
   publishedDate?: string;
@@ -62,15 +64,15 @@ interface SectionResult {
   correctAnswers: number;
   wrongAnswers: number;
   skippedQuestions: number;
-  score: number; // raw marks
-  scaledScore: number; // 0-100 per-section
+  score: number;
+  scaledScore: number;
   timeSpent: number;
 }
 
 interface MockResult {
   testId: string;
-  totalScore: number; // overall raw marks
-  overallScaledScore: number; // CAT-style composite 0-300
+  totalScore: number;
+  overallScaledScore: number;
   percentile: number;
   sectionResults: SectionResult[];
   studentAnswers: Record<string, string>;
@@ -131,9 +133,7 @@ function calcScaledScore(correct: number, wrong: number, total: number) {
   return Math.max(0, Math.round((raw / maxRaw) * 100));
 }
 
-// Realistic CAT 2024-2025 based percentile lookup + interpolation
 function estimatePercentile(compositeScaled: number): number {
-  // Based on recent CAT trends (2023-2025 data)
   const percentileTable: [number, number][] = [
     [0, 0],
     [30, 70],
@@ -155,11 +155,9 @@ function estimatePercentile(compositeScaled: number): number {
   if (compositeScaled <= 0) return 0;
   if (compositeScaled >= 160) return 99.99;
 
-  // Linear interpolation between table points
   for (let i = 0; i < percentileTable.length - 1; i++) {
     const [score1, pct1] = percentileTable[i];
     const [score2, pct2] = percentileTable[i + 1];
-
     if (compositeScaled >= score1 && compositeScaled <= score2) {
       const ratio = (compositeScaled - score1) / (score2 - score1);
       return Math.round((pct1 + ratio * (pct2 - pct1)) * 100) / 100;
@@ -168,6 +166,153 @@ function estimatePercentile(compositeScaled: number): number {
 
   return 99.99;
 }
+
+// ─── Image URL Detection ───────────────────────────────────────────────────────
+// Detects common image URL patterns and [image: url] / ![alt](url) markdown syntax
+
+const IMAGE_URL_REGEX = /(?:!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)|\[image:\s*(https?:\/\/[^\]]+)\]|(https?:\/\/\S+\.(?:png|jpg|jpeg|gif|webp|svg)(?:\?[^\s]*)?(?=#|\s|$)))/gi;
+
+type PassageSegment =
+  | { type: "text"; content: string }
+  | { type: "image"; url: string; alt?: string };
+
+/**
+ * Parses a passage text string into an array of text and image segments.
+ * Handles:
+ *   - Bare image URLs:  https://example.com/chart.png
+ *   - Markdown images:  ![alt text](https://example.com/chart.png)
+ *   - Tagged images:    [image: https://example.com/chart.png]
+ */
+function parsePassageSegments(text: string): PassageSegment[] {
+  const normalized = text.replace(/\\n/g, "\n");
+  const segments: PassageSegment[] = [];
+  let lastIndex = 0;
+
+  // Reset regex state
+  IMAGE_URL_REGEX.lastIndex = 0;
+
+  let match: RegExpExecArray | null;
+  while ((match = IMAGE_URL_REGEX.exec(normalized)) !== null) {
+    const [fullMatch, mdAlt, mdUrl, tagUrl, bareUrl] = match;
+    const url = mdUrl || tagUrl || bareUrl;
+    const alt = mdAlt || undefined;
+
+    // Push any text before this match
+    if (match.index > lastIndex) {
+      segments.push({ type: "text", content: normalized.slice(lastIndex, match.index) });
+    }
+
+    segments.push({ type: "image", url: url.trim(), alt });
+    lastIndex = match.index + fullMatch.length;
+  }
+
+  // Push remaining text
+  if (lastIndex < normalized.length) {
+    segments.push({ type: "text", content: normalized.slice(lastIndex) });
+  }
+
+  return segments;
+}
+
+// ─── Passage Image Lightbox ────────────────────────────────────────────────────
+
+function PassageImage({ url, alt }: { url: string; alt?: string }) {
+  const [lightbox, setLightbox] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return (
+      <div className="my-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-xs text-red-600">
+        <span>⚠️ Image failed to load:</span>
+        <a href={url} target="_blank" rel="noopener noreferrer" className="underline truncate max-w-[200px]">{url}</a>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="my-3 relative group">
+        {!loaded && (
+          <div className="h-24 rounded-lg bg-secondary/40 animate-pulse flex items-center justify-center text-xs text-muted-foreground">
+            Loading image…
+          </div>
+        )}
+        <img
+          src={url}
+          alt={alt || "Passage image"}
+          className={`max-w-full rounded-lg border border-border shadow-sm cursor-zoom-in transition-opacity ${loaded ? "opacity-100" : "opacity-0 absolute inset-0"}`}
+          style={{ maxHeight: "300px", objectFit: "contain" }}
+          onLoad={() => setLoaded(true)}
+          onError={() => { setLoaded(true); setError(true); }}
+          onClick={() => setLightbox(true)}
+        />
+        {loaded && !error && (
+          <button
+            onClick={() => setLightbox(true)}
+            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            title="View full size"
+          >
+            <ZoomIn size={14} />
+          </button>
+        )}
+        {alt && loaded && !error && (
+          <p className="text-[11px] text-center text-muted-foreground mt-1 italic">{alt}</p>
+        )}
+      </div>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setLightbox(false)}
+        >
+          <button
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 text-white hover:bg-white/20"
+            onClick={() => setLightbox(false)}
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={url}
+            alt={alt || "Passage image"}
+            className="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── Passage Renderer ──────────────────────────────────────────────────────────
+
+function PassageContent({ text }: { text: string }) {
+  const segments = parsePassageSegments(text);
+
+  return (
+    <div className="space-y-1">
+      {segments.map((seg, i) => {
+        if (seg.type === "image") {
+          return <PassageImage key={i} url={seg.url} alt={seg.alt} />;
+        }
+        // Split text segment into paragraphs
+        return (
+          <div key={i}>
+            {seg.content
+              .split("\n\n")
+              .map((para, j) => para.trim())
+              .filter(Boolean)
+              .map((para, j) => (
+                <p key={j} className="mb-2 last:mb-0">{para}</p>
+              ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Status dot for question palette ───────────────────────────────────────────
 
 function StatusDot({
@@ -209,9 +354,8 @@ export default function MockTest({ user }: { user: any }) {
   const [loading, setLoading] = useState(true);
   const [testLoading, setTestLoading] = useState(false);
 
-  // Section flow state
-  const [sectionIdx, setSectionIdx] = useState(0); // index into SECTION_ORDER
-  const [currentIdx, setCurrentIdx] = useState(0); // question index within section
+  const [sectionIdx, setSectionIdx] = useState(0);
+  const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [flagged, setFlagged] = useState<Set<string>>(new Set());
   const [timeLeft, setTimeLeft] = useState(0);
@@ -221,10 +365,8 @@ export default function MockTest({ user }: { user: any }) {
   const [reviewMode, setReviewMode] = useState(false);
   const [reviewSection, setReviewSection] = useState<SectionName | null>(null);
 
-  // total elapsed across whole test (for final result time)
   const testStartRef = useRef<number>(0);
 
-  // ── Load tests ──────────────────────────────────────────────────────────────
   useEffect(() => {
     loadTests();
   }, []);
@@ -249,7 +391,6 @@ export default function MockTest({ user }: { user: any }) {
     }
   };
 
-  // ── Derived: questions for current section ──────────────────────────────────
   const sectionQuestions = useCallback(
     (test: MockTest | null, section: SectionName) => {
       if (!test?.questions) return [];
@@ -258,7 +399,6 @@ export default function MockTest({ user }: { user: any }) {
     []
   );
 
-  // ── Timer ───────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (view !== "test" || submitted) return;
     if (timeLeft <= 0) {
@@ -269,7 +409,6 @@ export default function MockTest({ user }: { user: any }) {
     return () => clearInterval(t);
   }, [view, submitted, timeLeft]);
 
-  // ── Passage lookup for current question ─────────────────────────────────────
   useEffect(() => {
     if (!selectedTest || view !== "test") return;
     const qs = sectionQuestions(selectedTest, SECTION_ORDER[sectionIdx]);
@@ -281,7 +420,6 @@ export default function MockTest({ user }: { user: any }) {
     }
   }, [currentIdx, sectionIdx, selectedTest, view, sectionQuestions]);
 
-  // ── Actions ──────────────────────────────────────────────────────────────────
   const startTest = async (test: MockTest) => {
     if (attempts[test.id]) {
       setTestLoading(true);
@@ -346,7 +484,6 @@ export default function MockTest({ user }: { user: any }) {
     });
   }, []);
 
-  // Called when a section's time runs out OR student manually submits the section
   const handleSectionEnd = useCallback(() => {
     if (submitted) return;
     setSubmitted(true);
@@ -369,9 +506,7 @@ export default function MockTest({ user }: { user: any }) {
 
     const sectionResults: SectionResult[] = SECTION_ORDER.map((sec) => {
       const qs = sectionQuestions(selectedTest, sec);
-      let correct = 0,
-        wrong = 0,
-        skipped = 0;
+      let correct = 0, wrong = 0, skipped = 0;
       qs.forEach((q) => {
         const ans = answers[q.id];
         if (!ans) skipped++;
@@ -394,7 +529,7 @@ export default function MockTest({ user }: { user: any }) {
     const totalScore = sectionResults.reduce((s, r) => s + r.score, 0);
     const overallScaledScore = Math.round(
       sectionResults.reduce((s, r) => s + r.scaledScore, 0) / sectionResults.length * 3
-    ); // approx 0-300 composite
+    );
     const percentile = estimatePercentile(overallScaledScore);
     const timeSpent = Math.round((Date.now() - testStartRef.current) / 1000);
 
@@ -493,14 +628,14 @@ export default function MockTest({ user }: { user: any }) {
                       )}
                     </div>
                     <CardTitle className="text-base mt-2">{t.name}</CardTitle>
-<div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-border">
-  <span className="text-muted-foreground flex items-center gap-1">
-    👥 Students Attempted
-  </span>
-  <span className="font-semibold text-emerald-600">
-    {(t.studentsAttempted || 0).toLocaleString()}+
-  </span>
-</div>
+                    <div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-border">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        👥 Students Attempted
+                      </span>
+                      <span className="font-semibold text-emerald-600">
+                        {(t.studentsAttempted || 0).toLocaleString()}+
+                      </span>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex gap-4 text-xs text-muted-foreground">
@@ -553,7 +688,7 @@ export default function MockTest({ user }: { user: any }) {
     );
   }
 
-  // ── INSTRUCTIONS (whole-test briefing) ───────────────────────────────────────
+  // ── INSTRUCTIONS ─────────────────────────────────────────────────────────────
   if (view === "instructions" && selectedTest) {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
@@ -567,13 +702,13 @@ export default function MockTest({ user }: { user: any }) {
             </div>
             <CardTitle className="text-2xl">{selectedTest.name}</CardTitle>
             <div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-border">
-  <span className="text-muted-foreground flex items-center gap-1">
-    👥 Students Attempted
-  </span>
-  <span className="font-semibold text-emerald-600">
-    {(selectedTest.studentsAttempted || 0).toLocaleString()}+
-  </span>
-</div>
+              <span className="text-muted-foreground flex items-center gap-1">
+                👥 Students Attempted
+              </span>
+              <span className="font-semibold text-emerald-600">
+                {(selectedTest.studentsAttempted || 0).toLocaleString()}+
+              </span>
+            </div>
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
             <div className="grid grid-cols-3 gap-4 text-center">
@@ -630,7 +765,7 @@ export default function MockTest({ user }: { user: any }) {
     );
   }
 
-  // ── SECTION BREAK (between sections) ─────────────────────────────────────────
+  // ── SECTION BREAK ─────────────────────────────────────────────────────────────
   if (view === "section-break" && selectedTest) {
     const justFinished = SECTION_ORDER[sectionIdx];
     const next = SECTION_ORDER[sectionIdx + 1];
@@ -671,7 +806,7 @@ export default function MockTest({ user }: { user: any }) {
     );
   }
 
-  // ── TEST VIEW (one section, live) ─────────────────────────────────────────────
+  // ── TEST VIEW ─────────────────────────────────────────────────────────────────
   if (view === "test" && selectedTest) {
     const currentSection = SECTION_ORDER[sectionIdx];
     const questions = sectionQuestions(selectedTest, currentSection);
@@ -721,7 +856,6 @@ export default function MockTest({ user }: { user: any }) {
             </div>
           </div>
           <Progress value={progress} className="h-1 rounded-none" />
-          {/* Section progress strip */}
           <div className="flex max-w-6xl mx-auto px-4 pb-1 gap-1">
             {SECTION_ORDER.map((sec, i) => (
               <div
@@ -751,13 +885,9 @@ export default function MockTest({ user }: { user: any }) {
                   </span>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-sm leading-relaxed text-muted-foreground max-h-56 overflow-y-auto pr-2 space-y-3">
-                    {activePassage.text
-                      .replace(/\\n/g, "\n")
-                      .split("\n\n")
-                      .map((para, i) => (
-                        <p key={i}>{para}</p>
-                      ))}
+                  {/* ✅ Updated: renders both text paragraphs and images */}
+                  <div className="text-sm leading-relaxed text-muted-foreground max-h-72 overflow-y-auto pr-2">
+                    <PassageContent text={activePassage.text} />
                   </div>
                 </CardContent>
               </Card>
@@ -786,7 +916,9 @@ export default function MockTest({ user }: { user: any }) {
                     <Flag size={16} />
                   </button>
                 </div>
-                <p className="text-base font-semibold leading-relaxed mt-3"><Latex>{currentQ.questionText}</Latex></p>
+                <p className="text-base font-semibold leading-relaxed mt-3">
+                  <Latex>{currentQ.questionText}</Latex>
+                </p>
               </CardHeader>
               <CardContent className="space-y-2">
                 <RadioGroup
@@ -965,6 +1097,12 @@ export default function MockTest({ user }: { user: any }) {
               const studentAns = result.studentAnswers[q.id];
               const isCorrect = studentAns === q.correctAnswer;
               const isSkipped = !studentAns;
+
+              // Find the passage for this question if any
+              const passage = q.passageId && selectedTest.passages
+                ? selectedTest.passages.find((p) => p.id === q.passageId)
+                : null;
+
               return (
                 <Card
                   key={q.id}
@@ -996,6 +1134,17 @@ export default function MockTest({ user }: { user: any }) {
                         </span>
                       )}
                     </div>
+
+                    {/* ✅ Passage shown inline in review too */}
+                    {passage && (
+                      <div className="mt-3 p-3 rounded-lg bg-secondary/30 border border-border text-xs text-muted-foreground leading-relaxed">
+                        <p className="text-[10px] font-bold uppercase mb-2 text-muted-foreground">
+                          Passage · {passage.title}
+                        </p>
+                        <PassageContent text={passage.text} />
+                      </div>
+                    )}
+
                     <p className="font-semibold text-sm mt-2">
                       Q{idx + 1}. <Latex>{q.questionText}</Latex>
                     </p>
@@ -1045,14 +1194,10 @@ export default function MockTest({ user }: { user: any }) {
           <div className="bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-5 text-white">
             <p className="text-sm font-bold uppercase tracking-widest opacity-80">Full Length Mock Result</p>
             <h2 className="text-2xl font-black mt-1">{selectedTest.name}</h2>
-            <div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-border">
-  <span className="text-muted-foreground flex items-center gap-1">
-    👥 Students Attempted
-  </span>
-  <span className="font-semibold text-emerald-600">
-    {(selectedTest.studentsAttempted || 0).toLocaleString()}+
-  </span>
-</div>
+            <div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-white/20">
+              <span className="opacity-80 flex items-center gap-1">👥 Students Attempted</span>
+              <span className="font-semibold">{(selectedTest.studentsAttempted || 0).toLocaleString()}+</span>
+            </div>
           </div>
           <CardContent className="pt-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -1075,7 +1220,6 @@ export default function MockTest({ user }: { user: any }) {
           </CardContent>
         </Card>
 
-        {/* Per-section breakdown */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {result.sectionResults.map((sr) => {
             const meta = SECTION_META[sr.section];
