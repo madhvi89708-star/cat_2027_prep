@@ -278,7 +278,7 @@ mockResults: [],
   announcements: [
     {
       id: "AN001",
-      title: "Welcome to CAT Prep Pro",
+      title: "Welcome to CAT 2027 Prep",
       content: "Good luck with your preparation!",
       createdDate: new Date().toISOString(),
       createdBy: "Admin"
