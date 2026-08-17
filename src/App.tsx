@@ -435,9 +435,9 @@ function Dashboard({ user, setActiveTab }: { user: UserProfile, setActiveTab: (t
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {[
-              { label: "Daily Test", icon: ClipboardList, tab: "daily-test", color: "bg-orange-500" },
-              { label: "Sectional Tests", icon: ClipboardList, tab: "sectional", color: "bg-blue-500" },
-              { label: "Mock Tests", icon: ClipboardList, tab: "mock", color: "bg-purple-500" },
+              { label: "Daily Test", icon: ClipboardList, tab: "daily-test", color: "bg-orange-500", subtitle: "Recently Updated" },
+              { label: "Sectional Tests", icon: ClipboardList, tab: "sectional", color: "bg-blue-500", subtitle: "Recently Updated" },
+              { label: "Mock Tests", icon: ClipboardList, tab: "mock", color: "bg-purple-500", subtitle: "Recently Updated" },
               { label: "Analytics", icon: BarChart3, tab: "analytics", color: "bg-green-500" },
               { label: "History", icon: History, tab: "history", color: "bg-slate-500" },
               { label: "Course Materials", icon: BookOpen, tab: "courses", color: "bg-pink-500" },
@@ -451,6 +451,9 @@ function Dashboard({ user, setActiveTab }: { user: UserProfile, setActiveTab: (t
                   <item.icon size={24} />
                 </div>
                 <span className="font-semibold text-sm">{item.label}</span>
+    {item.subtitle && (
+      <span className="text-[11px] text-muted-foreground mt-1 text-center">{item.subtitle}</span>
+    )}
               </button>
             ))}
           </div>
