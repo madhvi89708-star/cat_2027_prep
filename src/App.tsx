@@ -77,13 +77,17 @@ interface Question {
 
 // --- Components ---
 
-const SidebarItem = ({ icon: Icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) => (
+const SidebarItem = ({ icon: Icon, label, active, onClick, highlight }: { icon: any, label: string, active: boolean, onClick: () => void, highlight?: boolean }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all border ${
       active 
-        ? "bg-primary text-primary-foreground shadow-md" 
-        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+        ? "bg-primary text-primary-foreground shadow-md border-transparent" 
+        : "text-muted-foreground hover:bg-secondary hover:text-foreground border-transparent"
+    } ${
+      highlight && !active ? "border-yellow-400 ring-1 ring-yellow-400/60 shadow-[0_0_8px_rgba(250,204,21,0.4)]" : ""
+    } ${
+      highlight && active ? "ring-2 ring-yellow-400 ring-offset-1" : ""
     }`}
   >
     <Icon size={20} />
@@ -208,14 +212,14 @@ export default function App() {
                   </Button>
                 </div>
                 <nav className="flex-1 space-y-2">
-                  <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === "dashboard"} onClick={() => { setActiveTab("dashboard"); setIsMobileMenuOpen(false); }} />
-                  <SidebarItem icon={BookOpen} label="Course Materials" active={activeTab === "courses"} onClick={() => { setActiveTab("courses"); setIsMobileMenuOpen(false); }} />
-                  <SidebarItem icon={Video} label="Video Lectures" active={activeTab === "videos"} onClick={() => { setActiveTab("videos"); setIsMobileMenuOpen(false); }} />
-                  <SidebarItem icon={ClipboardList} label="Daily Practice" active={activeTab === "daily-test"} onClick={() => { setActiveTab("daily-test"); setIsMobileMenuOpen(false); }} />
-                  <SidebarItem icon={History} label="Test History" active={activeTab === "history"} onClick={() => { setActiveTab("history"); setIsMobileMenuOpen(false); }} />
-                   <SidebarItem icon={ClipboardList} label="Sectional Tests" active={activeTab === "sectional"} onClick={() => setActiveTab("sectional")} />
-                  <SidebarItem icon={BarChart3} label="Analytics" active={activeTab === "analytics"} onClick={() => { setActiveTab("analytics"); setIsMobileMenuOpen(false); }} />
-                    <SidebarItem icon={ClipboardList} label="Mock Tests" active={activeTab === "mock"} onClick={() => setActiveTab("mock")} />
+                 <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === "dashboard"} onClick={() => { setActiveTab("dashboard"); setIsMobileMenuOpen(false); }} />
+                 <SidebarItem icon={ClipboardList} label="Daily Practice" active={activeTab === "daily-test"} onClick={() => { setActiveTab("daily-test"); setIsMobileMenuOpen(false); }} highlight />
+                 <SidebarItem icon={ClipboardList} label="Sectional Tests" active={activeTab === "sectional"} onClick={() => setActiveTab("sectional")} highlight />     
+                 <SidebarItem icon={ClipboardList} label="Mock Tests" active={activeTab === "mock"} onClick={() => setActiveTab("mock")} highlight />
+                 <SidebarItem icon={BookOpen} label="Course Materials" active={activeTab === "courses"} onClick={() => { setActiveTab("courses"); setIsMobileMenuOpen(false); }} />
+                 <SidebarItem icon={Video} label="Video Lectures" active={activeTab === "videos"} onClick={() => { setActiveTab("videos"); setIsMobileMenuOpen(false); }} />
+                 <SidebarItem icon={History} label="Test History" active={activeTab === "history"} onClick={() => { setActiveTab("history"); setIsMobileMenuOpen(false); }} />
+                 <SidebarItem icon={BarChart3} label="Analytics" active={activeTab === "analytics"} onClick={() => { setActiveTab("analytics"); setIsMobileMenuOpen(false); }} />
                   {user.role === "admin" && (
                     <>
                       <div className="pt-6 pb-2 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] px-3">Admin Panel</div>
@@ -253,13 +257,13 @@ export default function App() {
 
           <nav className="flex-1 space-y-1">
             <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")} />
+            <SidebarItem icon={ClipboardList} label="Daily Practice" active={activeTab === "daily-test"} onClick={() => setActiveTab("daily-test")} highlight />
+             <SidebarItem icon={ClipboardList} label="Sectional Tests" active={activeTab === "sectional"} onClick={() => setActiveTab("sectional")} highlight />
+             <SidebarItem icon={ClipboardList} label="Mock Tests" active={activeTab === "mock"} onClick={() => setActiveTab("mock")} highlight />
             <SidebarItem icon={BookOpen} label="Course Materials" active={activeTab === "courses"} onClick={() => setActiveTab("courses")} />
             <SidebarItem icon={Video} label="Video Lectures" active={activeTab === "videos"} onClick={() => setActiveTab("videos")} />
-            <SidebarItem icon={ClipboardList} label="Daily Practice" active={activeTab === "daily-test"} onClick={() => setActiveTab("daily-test")} />
             <SidebarItem icon={History} label="Test History" active={activeTab === "history"} onClick={() => setActiveTab("history")} />
-             <SidebarItem icon={ClipboardList} label="Sectional Tests" active={activeTab === "sectional"} onClick={() => setActiveTab("sectional")} />
             <SidebarItem icon={BarChart3} label="Analytics" active={activeTab === "analytics"} onClick={() => setActiveTab("analytics")} />
-              <SidebarItem icon={ClipboardList} label="Mock Tests" active={activeTab === "mock"} onClick={() => setActiveTab("mock")} />
             {user.role === "admin" && (
               <>
                 <div className="pt-4 pb-2 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin Panel</div>
@@ -432,11 +436,11 @@ function Dashboard({ user, setActiveTab }: { user: UserProfile, setActiveTab: (t
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {[
               { label: "Daily Test", icon: ClipboardList, tab: "daily-test", color: "bg-orange-500" },
-              { label: "Courses", icon: BookOpen, tab: "courses", color: "bg-blue-500" },
-              { label: "Videos", icon: Video, tab: "videos", color: "bg-purple-500" },
+              { label: "Sectional Tests", icon: ClipboardList, tab: "sectional", color: "bg-blue-500" },
+              { label: "Mock Tests", icon: ClipboardList, tab: "mock", color: "bg-purple-500" },
               { label: "Analytics", icon: BarChart3, tab: "analytics", color: "bg-green-500" },
               { label: "History", icon: History, tab: "history", color: "bg-slate-500" },
-              { label: "Profile", icon: User, tab: "profile", color: "bg-pink-500" },
+              { label: "Course Materials", icon: BookOpen, tab: "courses", color: "bg-pink-500" },
             ].map((item) => (
               <button
                 key={item.label}
