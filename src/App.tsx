@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
  import SectionalTest from "./sectional-test";
 import MockTest from "./mock-test";
+import PYQTest from "./pyq-test";
+import DailyPractice from "./daily-practice";
 import "katex/dist/katex.min.css";
 import Latex from "react-latex-next";
 import { 
@@ -26,7 +28,8 @@ import {
   ExternalLink,
   BrainCircuit,
   History,
-  Presentation
+  Presentation,
+  Archive
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
@@ -174,7 +177,7 @@ export default function App() {
           <div className="bg-primary p-1.5 rounded-lg">
             <BrainCircuit className="text-white" size={20} />
           </div>
-          <span className="font-bold text-lg tracking-tight">CAT 2027 Prep</span>
+          <span className="font-bold text-lg tracking-tight">EduShastra</span>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
           {isMobileMenuOpen ? <X /> : <Menu />}
@@ -205,21 +208,22 @@ export default function App() {
                     <div className="bg-primary p-2 rounded-xl text-white shadow-lg shadow-primary/20">
                       <BrainCircuit size={24} />
                     </div>
-                    <span className="font-bold text-xl tracking-tight">CAT 2027 Prep</span>
+                    <span className="font-bold text-xl tracking-tight">EduShastra</span>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
                     <X size={20} />
                   </Button>
                 </div>
                 <nav className="flex-1 space-y-2">
-                 <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === "dashboard"} onClick={() => { setActiveTab("dashboard"); setIsMobileMenuOpen(false); }} />
-                 <SidebarItem icon={ClipboardList} label="Daily Practice" active={activeTab === "daily-test"} onClick={() => { setActiveTab("daily-test"); setIsMobileMenuOpen(false); }} highlight />
-                 <SidebarItem icon={ClipboardList} label="Sectional Tests" active={activeTab === "sectional"} onClick={() => setActiveTab("sectional")} highlight />     
-                 <SidebarItem icon={ClipboardList} label="Mock Tests" active={activeTab === "mock"} onClick={() => setActiveTab("mock")} highlight />
-                 <SidebarItem icon={BookOpen} label="Course Materials" active={activeTab === "courses"} onClick={() => { setActiveTab("courses"); setIsMobileMenuOpen(false); }} />
-                 <SidebarItem icon={Video} label="Video Lectures" active={activeTab === "videos"} onClick={() => { setActiveTab("videos"); setIsMobileMenuOpen(false); }} />
-                 <SidebarItem icon={History} label="Test History" active={activeTab === "history"} onClick={() => { setActiveTab("history"); setIsMobileMenuOpen(false); }} />
-                 <SidebarItem icon={BarChart3} label="Analytics" active={activeTab === "analytics"} onClick={() => { setActiveTab("analytics"); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === "dashboard"} onClick={() => { setActiveTab("dashboard"); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem icon={ClipboardList} label="Daily Practice" active={activeTab === "daily-test"} onClick={() => { setActiveTab("daily-test"); setIsMobileMenuOpen(false); }} highlight />
+                  <SidebarItem icon={ClipboardList} label="Sectional Tests" active={activeTab === "sectional"} onClick={() => setActiveTab("sectional")} highlight />
+                  <SidebarItem icon={ClipboardList} label="Mock Tests" active={activeTab === "mock"} onClick={() => setActiveTab("mock")} highlight />
+                  <SidebarItem icon={BookOpen} label="Course Materials" active={activeTab === "courses"} onClick={() => { setActiveTab("courses"); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem icon={Video} label="Video Lectures" active={activeTab === "videos"} onClick={() => { setActiveTab("videos"); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem icon={History} label="Test History" active={activeTab === "history"} onClick={() => { setActiveTab("history"); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem icon={BarChart3} label="Analytics" active={activeTab === "analytics"} onClick={() => { setActiveTab("analytics"); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem icon={Archive} label="PYQ Papers" active={activeTab === "pyq"} onClick={() => { setActiveTab("pyq"); setIsMobileMenuOpen(false); }} />
                   {user.role === "admin" && (
                     <>
                       <div className="pt-6 pb-2 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] px-3">Admin Panel</div>
@@ -252,19 +256,20 @@ export default function App() {
             <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">
               <BrainCircuit className="text-white" size={24} />
             </div>
-            <span className="font-bold text-xl tracking-tight">CAT 2027 Prep</span>
+            <span className="font-bold text-xl tracking-tight">EduShastra</span>
           </div>
 
           <nav className="flex-1 space-y-1">
             <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")} />
-            <SidebarItem icon={ClipboardList} label="Daily Practice" active={activeTab === "daily-test"} onClick={() => setActiveTab("daily-test")} highlight />
-             <SidebarItem icon={ClipboardList} label="Sectional Tests" active={activeTab === "sectional"} onClick={() => setActiveTab("sectional")} highlight />
-             <SidebarItem icon={ClipboardList} label="Mock Tests" active={activeTab === "mock"} onClick={() => setActiveTab("mock")} highlight />
-            <SidebarItem icon={BookOpen} label="Course Materials" active={activeTab === "courses"} onClick={() => setActiveTab("courses")} />
+           <SidebarItem icon={ClipboardList} label="Daily Practice" active={activeTab === "daily-test"} onClick={() => setActiveTab("daily-test")} highlight />
+           <SidebarItem icon={ClipboardList} label="Sectional Tests" active={activeTab === "sectional"} onClick={() => setActiveTab("sectional")} highlight />
+           <SidebarItem icon={ClipboardList} label="Mock Tests" active={activeTab === "mock"} onClick={() => setActiveTab("mock")} highlight />
+           <SidebarItem icon={BookOpen} label="Course Materials" active={activeTab === "courses"} onClick={() => setActiveTab("courses")} />
             <SidebarItem icon={Video} label="Video Lectures" active={activeTab === "videos"} onClick={() => setActiveTab("videos")} />
             <SidebarItem icon={History} label="Test History" active={activeTab === "history"} onClick={() => setActiveTab("history")} />
             <SidebarItem icon={BarChart3} label="Analytics" active={activeTab === "analytics"} onClick={() => setActiveTab("analytics")} />
-            {user.role === "admin" && (
+           <SidebarItem icon={Archive} label="PYQ Papers" active={activeTab === "pyq"} onClick={() => setActiveTab("pyq")} /> 
+           {user.role === "admin" && (
               <>
                 <div className="pt-4 pb-2 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin Panel</div>
                 <SidebarItem icon={ShieldCheck} label="Admin Dashboard" active={activeTab === "admin"} onClick={() => setActiveTab("admin")} />
@@ -300,11 +305,12 @@ export default function App() {
             {activeTab === "dashboard" && <Dashboard user={user} setActiveTab={setActiveTab} />}
             {activeTab === "courses" && <CourseMaterials />}
             {activeTab === "videos" && <VideoLectures />}
-            {activeTab === "daily-test" && <DailyTest user={user} />}
+            {activeTab === "daily-test" && <DailyPractice user={user} />}
             {activeTab === "history" && <TestHistory user={user} />}
             {activeTab === "analytics" && <Analytics user={user} />}
               {activeTab === "sectional" && <SectionalTest user={user} />}
               {activeTab === "mock" && <MockTest user={user} />}
+           {activeTab === "pyq" && <PYQTest user={user} />}
             {activeTab === "admin" && <AdminDashboard user={user} />}
           </motion.div>
         </AnimatePresence>
@@ -347,8 +353,8 @@ function LoginPage({ onLogin }: { onLogin: (u: UserProfile) => void }) {
               <BrainCircuit className="text-white" size={32} />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">CAT 2027 Prep</CardTitle>
-          <CardDescription>Login and Give wings to your CAT prep.</CardDescription>
+          <CardTitle className="text-2xl font-bold tracking-tight">EduShastra</CardTitle>
+          <CardDescription>Give wings to your MBA prep.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
@@ -377,11 +383,21 @@ function LoginPage({ onLogin }: { onLogin: (u: UserProfile) => void }) {
               />
             </div>
           </CardContent>
-          <CardFooter>
-            <Button className="w-full h-11 text-base" type="submit" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
-            </Button>
-          </CardFooter>
+         <CardFooter className="flex flex-col gap-3">
+  <Button className="w-full h-11 text-base" type="submit" disabled={loading}>
+    {loading ? "Signing in..." : "Sign In"}
+  </Button>
+  <div className="text-center text-sm text-muted-foreground">
+    Don't have an account?{" "}
+    <button 
+      type="button"
+      onClick={() => window.location.href = "https://forms.gle/Q2sUWUmu22T7bkyg6"} 
+      className="text-primary hover:underline font-medium"
+    >
+      Register Now
+    </button>
+  </div>
+</CardFooter>
         </form>
       </Card>
     </div>
@@ -391,7 +407,6 @@ function LoginPage({ onLogin }: { onLogin: (u: UserProfile) => void }) {
 function Dashboard({ user, setActiveTab }: { user: UserProfile, setActiveTab: (t: string) => void }) {
   const [stats, setStats] = useState({ attempted: 0, avgScore: 0 });
   const [announcements, setAnnouncements] = useState<any[]>([]);
-
 
   return (
     <div className="space-y-8">
@@ -435,27 +450,27 @@ function Dashboard({ user, setActiveTab }: { user: UserProfile, setActiveTab: (t
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {[
-              { label: "Daily Test", icon: ClipboardList, tab: "daily-test", color: "bg-orange-500", subtitle: "Recently Updated" },
-              { label: "Sectional Tests", icon: ClipboardList, tab: "sectional", color: "bg-blue-500", subtitle: "Recently Updated" },
-              { label: "Mock Tests", icon: ClipboardList, tab: "mock", color: "bg-purple-500", subtitle: "Recently Updated" },
+              { label: "Daily Test", icon: ClipboardList, tab: "daily-test", color: "bg-orange-500", subtitle: "Recently Updated"  },
+              { label: "Sectional Tests", icon: ClipboardList, tab: "sectional", color: "bg-blue-500", subtitle: "Recently Updated"  },
+              { label: "Mocks", icon: ClipboardList, tab: "mock", color: "bg-purple-500" },
+              { label: "Courses", icon: BookOpen, tab: "courses", color: "bg-blue-500" },
+              { label: "Videos", icon: Video, tab: "videos", color: "bg-purple-500" },
               { label: "Analytics", icon: BarChart3, tab: "analytics", color: "bg-green-500" },
-              { label: "History", icon: History, tab: "history", color: "bg-slate-500" },
-              { label: "Course Materials", icon: BookOpen, tab: "courses", color: "bg-pink-500" },
             ].map((item) => (
-              <button
-                key={item.label}
-                onClick={() => setActiveTab(item.tab)}
-                className="group flex flex-col items-center justify-center p-6 bg-background rounded-2xl border shadow-sm hover:shadow-md hover:border-primary/50 transition-all"
-              >
-                <div className={`${item.color} p-3 rounded-xl text-white mb-3 group-hover:scale-110 transition-transform`}>
-                  <item.icon size={24} />
-                </div>
-                <span className="font-semibold text-sm">{item.label}</span>
+  <button
+    key={item.label}
+    onClick={() => setActiveTab(item.tab)}
+    className="group flex flex-col items-center justify-center p-6 bg-background rounded-2xl border shadow-sm hover:shadow-md hover:border-primary/50 transition-all"
+  >
+    <div className={`${item.color} p-3 rounded-xl text-white mb-3 group-hover:scale-110 transition-transform`}>
+      <item.icon size={24} />
+    </div>
+    <span className="font-semibold text-sm">{item.label}</span>
     {item.subtitle && (
       <span className="text-[11px] text-muted-foreground mt-1 text-center">{item.subtitle}</span>
     )}
-              </button>
-            ))}
+  </button>
+))}
           </div>
         </div>
 
@@ -472,7 +487,7 @@ function Dashboard({ user, setActiveTab }: { user: UserProfile, setActiveTab: (t
                   <CardDescription className="text-xs">{new Date(ann.createdDate).toLocaleDateString()}</CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <p className="text-sm text-muted-foreground">{ann.content}</p>
+               <img src={ann.content} alt="Announcement image" className="w-full h-auto rounded-md object-cover" />
                 </CardContent>
               </Card>
             ))}
@@ -634,9 +649,28 @@ function VideoLectures() {
             </div>
           ) : filtered.map((video) => video && (
             <Card key={video.id} className="overflow-hidden group hover:shadow-xl transition-all">
-              <div className="aspect-video bg-slate-100 relative flex items-center justify-center">
-                <PlayCircle className="text-primary/40 group-hover:text-primary group-hover:scale-110 transition-all" size={64} />
-                <div className="absolute bottom-3 right-3 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded">
+                 <div className="aspect-video bg-slate-100 relative flex items-center justify-center overflow-hidden">
+  {(() => {
+    const url = video.googleDriveLink;
+    const ytMatch = url?.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    const driveMatch = url?.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    const driveIdMatch = url?.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    const fileId = driveMatch?.[1] || driveIdMatch?.[1];
+    const thumbnail = ytMatch
+      ? `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`
+      : fileId
+      ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w640`
+      : null;
+    return thumbnail ? (
+      <img
+        src={thumbnail}
+        alt={video.topicName}
+        className="absolute inset-0 w-full h-full object-cover"
+        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+      />
+    ) : null;
+  })()}
+                           <div className="absolute bottom-3 right-3 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded">
                   {video.duration} MIN
                 </div>
               </div>
@@ -670,385 +704,6 @@ function VideoLectures() {
           ))}
         </div>
       </Tabs>
-    </div>
-  );
-}
-
-function DailyTest({ user }: { user: UserProfile }) {
-  const [view, setView] = useState<"list" | "test" | "result">("list");
-  const [availableTests, setAvailableTests] = useState<any[]>([]);
-  const [attempts, setAttempts] = useState<Record<string, any>>({});
-  const [test, setTest] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [timeLeft, setTimeLeft] = useState(40 * 60); // 40 minutes
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [result, setResult] = useState<any>(null);
-
-  useEffect(() => {
-    loadTests();
-  }, []);
-
-  const loadTests = async () => {
-    setLoading(true);
-    try {
-      const [tests, results] = await Promise.all([
-        apiRequest("/daily-tests"),
-        apiRequest("/performance")
-      ]);
-      setAvailableTests(tests);
-      const attemptMap: Record<string, any> = {};
-      results.forEach((r: any) => {
-        attemptMap[r.testId] = r;
-      });
-      setAttempts(attemptMap);
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const startTest = async (testToStart: any) => {
-    if (attempts[testToStart.id]) {
-      // Already attempted, show result
-      setTest(testToStart);
-      setResult(attempts[testToStart.id]);
-      setIsSubmitted(true);
-      setView("result");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const fullTest = await apiRequest(`/daily-test/${testToStart.id}`);
-      setTest(fullTest);
-      setCurrentQuestionIndex(0);
-      setAnswers({});
-      setTimeLeft(40 * 60);
-      setIsSubmitted(false);
-      setResult(null);
-      setView("test");
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (view === "test" && test && !isSubmitted && timeLeft > 0) {
-      const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-      return () => clearInterval(timer);
-    } else if (view === "test" && timeLeft === 0 && !isSubmitted) {
-      handleSubmit();
-    }
-  }, [view, test, isSubmitted, timeLeft]);
-
-  const handleSubmit = async () => {
-    if (!test) return;
-    
-    let correct = 0;
-    let wrong = 0;
-    let skipped = 0;
-    const sectionScores = { Quantitative: 0, DILR: 0, VARC: 0 };
-
-    test.questions.forEach((q: Question) => {
-      if (!q) return;
-      const ans = answers[q.id];
-      if (!ans) {
-        skipped++;
-      } else if (ans === q.correctAnswer) {
-        correct++;
-        const section = q.section as keyof typeof sectionScores;
-        if (sectionScores[section] !== undefined) {
-          sectionScores[section]++;
-        }
-      } else {
-        wrong++;
-      }
-    });
-
-    const totalScore = Math.round((correct / test.questions.length) * 100);
-    
-    try {
-      const res = await apiRequest("/test-results", {
-        method: "POST",
-        body: JSON.stringify({
-          testId: test.id,
-          totalScore,
-          correctAnswers: correct,
-          wrongAnswers: wrong,
-          skippedQuestions: skipped,
-          timeSpent: 40 * 60 - timeLeft,
-          sectionScores,
-          studentAnswers: answers
-        })
-      });
-      setResult(res);
-      setIsSubmitted(true);
-      setAttempts(prev => ({ ...prev, [test.id]: res }));
-      setView("result");
-      toast.success("Test submitted successfully!");
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-  };
-
-  if (loading) return <div className="text-center py-20">Loading...</div>;
-
-  if (view === "list") {
-    return (
-      <div className="space-y-6">
-        <header>
-          <h1 className="text-3xl font-bold tracking-tight">Daily Practice</h1>
-          <p className="text-muted-foreground">Access your daily practice tests and track your progress.</p>
-        </header>
-
-        {availableTests.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 bg-background rounded-xl border border-dashed">
-            <div className="bg-orange-100 p-4 rounded-full text-orange-600">
-              <AlertCircle size={48} />
-            </div>
-            <h2 className="text-xl font-bold">No Tests Available</h2>
-            <p className="text-muted-foreground max-w-md">There are no daily tests published yet. Please check back later.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {availableTests.map((t) => (
-              <Card key={t.id} className="hover:shadow-md transition-all border-t-4 border-t-primary">
-                <CardHeader>
-                  <div className="flex justify-between items-center mb-2">
-                    <Badge variant="outline">{new Date(t.testDate).toLocaleDateString()}</Badge>
-                    {attempts[t.id] ? (
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Completed</Badge>
-                    ) : (
-                      <Badge variant="secondary">Pending</Badge>
-                    )}
-                  </div>
-                  <CardTitle className="text-lg">Daily Practice Test</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    The Daily Sprint for MBA Success. One test per day.
-                  </p>
-                  {attempts[t.id] && (
-                    <div className="flex items-center gap-4 mb-4 p-3 bg-secondary/30 rounded-lg">
-                      <div className="text-center flex-1">
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Score</p>
-                        <p className="text-lg font-bold text-primary">{attempts[t.id].totalScore}%</p>
-                      </div>
-                      <div className="w-px h-8 bg-border" />
-                      <div className="text-center flex-1">
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Correct</p>
-                        <p className="text-lg font-bold text-green-600">{attempts[t.id].correctAnswers}</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    className="w-full" 
-                    variant={attempts[t.id] ? "outline" : "default"}
-                    onClick={() => startTest(t)}
-                  >
-                    {attempts[t.id] ? "View Results" : "Start Test"}
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (view === "result" && result) {
-    return (
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" onClick={() => setView("list")}>
-            <ChevronRight className="rotate-180" size={16} /> Back to List
-          </Button>
-        </div>
-        <header className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Test Results</h1>
-          <p className="text-muted-foreground">Great job completing this practice set!</p>
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="text-center p-6">
-            <p className="text-sm text-muted-foreground mb-1">Score</p>
-            <p className="text-3xl font-bold text-primary">{result.totalScore}%</p>
-          </Card>
-          <Card className="text-center p-6">
-            <p className="text-sm text-muted-foreground mb-1">Correct</p>
-            <p className="text-3xl font-bold text-green-600">{result.correctAnswers}</p>
-          </Card>
-          <Card className="text-center p-6">
-            <p className="text-sm text-muted-foreground mb-1">Wrong</p>
-            <p className="text-3xl font-bold text-red-600">{result.wrongAnswers}</p>
-          </Card>
-          <Card className="text-center p-6">
-            <p className="text-sm text-muted-foreground mb-1">Time</p>
-            <p className="text-3xl font-bold">{Math.floor(result.timeSpent / 60)}m {result.timeSpent % 60}s</p>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold">Review Questions</h2>
-          {test?.questions?.map((q: Question, idx: number) => (
-            <Card key={q.id} className={`border-l-4 ${
-              result.studentAnswers[q.id] === q.correctAnswer ? "border-l-green-500" : 
-              !result.studentAnswers[q.id] ? "border-l-yellow-500" : "border-l-red-500"
-            }`}>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center mb-2">
-                  <Badge variant="outline">{q.section}</Badge>
-                  {result.studentAnswers[q.id] === q.correctAnswer ? (
-                    <span className="text-green-600 flex items-center gap-1 text-xs font-bold"><CheckCircle2 size={14} /> Correct</span>
-                  ) : !result.studentAnswers[q.id] ? (
-                    <span className="text-yellow-600 flex items-center gap-1 text-xs font-bold"><AlertCircle size={14} /> Skipped</span>
-                  ) : (
-                    <span className="text-red-600 flex items-center gap-1 text-xs font-bold"><XCircle size={14} /> Incorrect</span>
-                  )}
-                </div>
-                <CardTitle className="text-base">Q{idx + 1}: {q.questionText}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-2">
-                  {q.options.map((opt) => (
-                    <div 
-                      key={opt} 
-                      className={`p-3 rounded-lg border text-sm ${
-                        opt === q.correctAnswer ? "bg-green-50 border-green-200 text-green-800 font-medium" :
-                        opt === result.studentAnswers[q.id] ? "bg-red-50 border-red-200 text-red-800" : "bg-secondary/20"
-                      }`}
-                    >
-                      {opt}
-                    </div>
-                  ))}
-                </div>
-                <div className="bg-secondary/30 p-4 rounded-lg text-sm">
-                  <p className="font-bold mb-1">Explanation:</p>
-                  <p className="text-muted-foreground">{q.explanation}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const currentQ = test.questions[currentQuestionIndex];
-  if (!currentQ) return <div className="text-center py-20">Error: Question not found.</div>;
-  const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8 sticky top-0 bg-background/80 backdrop-blur-md p-4 rounded-xl border z-10 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="bg-primary/10 text-primary px-3 py-1 rounded-full font-bold text-sm">
-            Q {currentQuestionIndex + 1} / {test.questions.length}
-          </div>
-          <div className="hidden sm:block">
-            <Badge variant="secondary">{currentQ.section}</Badge>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className={`flex items-center gap-2 font-mono font-bold ${timeLeft < 300 ? "text-red-500 animate-pulse" : "text-primary"}`}>
-            <Clock size={20} />
-            {formatTime(timeLeft)}
-          </div>
-          <Button variant="destructive" size="sm" onClick={handleSubmit}>Submit Test</Button>
-        </div>
-      </div>
-
-      <div className="space-y-8">
-        <Card className="border-none shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-xl md:text-2xl leading-relaxed">
-              <Latex>{currentQ.questionText}</Latex>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup 
-              value={answers[currentQ.id] || ""} 
-              onValueChange={(val) => setAnswers(prev => ({ ...prev, [currentQ.id]: val }))}
-              className="grid grid-cols-1 gap-3"
-            >
-              {currentQ.options.map((opt, idx) => (
-                <Label 
-                  key={opt}
-                  className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    answers[currentQ.id] === opt 
-                      ? "border-primary bg-blue-50 ring-1 ring-primary" 
-                      : "hover:border-primary/30 hover:bg-secondary/50"
-                  }`}
-                >
-                  <RadioGroupItem value={opt} id={`q-${idx}`} className="sr-only" />
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold border ${
-                    answers[currentQ.id] === opt ? "bg-blue-500 text-white border-blue-500" : "bg-secondary text-muted-foreground"
-                  }`}>
-                    {String.fromCharCode(65 + idx)}
-                  </div>
-                  <span className="text-base font-medium"><Latex>{opt}</Latex></span>
-                </Label>
-              ))}
-            </RadioGroup>
-          </CardContent>
-          <CardFooter className="flex justify-between border-t p-6">
-            <Button 
-              variant="outline" 
-              onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
-              disabled={currentQuestionIndex === 0}
-            >
-              Previous
-            </Button>
-            <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                onClick={() => setAnswers(prev => {
-                  const newAns = { ...prev };
-                  delete newAns[currentQ.id];
-                  return newAns;
-                })}
-              >
-                Clear
-              </Button>
-              <Button 
-                onClick={() => {
-                  if (currentQuestionIndex < test.questions.length - 1) {
-                    setCurrentQuestionIndex(prev => prev + 1);
-                  } else {
-                    handleSubmit();
-                  }
-                }}
-              >
-                {currentQuestionIndex === test.questions.length - 1 ? "Finish" : "Next Question"}
-              </Button>
-            </div>
-          </CardFooter>
-        </Card>
-
-        <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-          {test.questions.map((_: any, idx: number) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentQuestionIndex(idx)}
-              className={`h-10 rounded-lg font-bold text-xs transition-all ${
-                currentQuestionIndex === idx ? "ring-2 ring-primary ring-offset-2" : ""
-              } ${
-                answers[test.questions[idx].id] ? "bg-blue-500 text-white" : "bg-secondary text-muted-foreground"
-              }`}
-            >
-              {idx + 1}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
