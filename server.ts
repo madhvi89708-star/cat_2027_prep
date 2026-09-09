@@ -61,9 +61,10 @@ const SHEET_CONFIG: Record<string, string[]> = {
   Students: ["id", "email", "password", "name", "phone", "registrationDate", "status", "role"],
   CourseMaterials: ["id", "topicName", "section", "googleSheetLink", "googleDriveLink", "description", "dateAdded"],
   VideoLectures: ["id", "topicName", "section", "googleSheetLink", "googleDriveLink", "duration", "instructorName", "dateUploaded"],
-  UnverifiedQuestions: ["id", "section", "questionText", "options", "correctAnswer", "explanation", "difficulty"],
-  ApprovedQuestions: ["id", "section", "questionText", "options", "correctAnswer", "explanation", "difficulty", "approvedDate"],
-  DailyTests: ["id", "testDate", "questionIds"],
+  UnverifiedQuestions: ["id", "section", "questionText", "options", "correctAnswer", "explanation", "difficulty", "passageId", "targetExam"],
+  ApprovedQuestions: ["id", "section", "questionText", "options", "correctAnswer", "explanation", "difficulty", "passageId", "targetExam", "approvedDate"],
+  DailyTests: ["id", "testDate", "questionIds", "durationMinutes", "passageIds", "targetExam"],
+  DailyPassages: ["id", "title", "text", "targetExam"],
   TestResults: ["id", "studentId", "testDate", "testId", "totalScore", "correctAnswers", "wrongAnswers", "skippedQuestions", "timeSpent", "sectionScores", "studentAnswers"],
    SectionalTests:   ["id", "name", "section", "durationMinutes", "questionIds", "passageIds", "targetExam", "publishedDate"],
   SectionalQuestions: ["id", "section", "questionText", "questionType", "options", "correctAnswer", "answerTolerance", "explanation", "difficulty", "passageId", "targetExam"],
@@ -73,6 +74,10 @@ const SHEET_CONFIG: Record<string, string[]> = {
   MockQuestions:  ["id", "section", "questionText", "questionType", "options", "correctAnswer", "answerTolerance", "explanation", "difficulty", "passageId", "targetExam"],
   MockPassages:   ["id", "title", "text", "targetExam"],
   MockResults:    ["id", "studentId", "testId", "totalScore", "overallScaledScore", "percentile", "sectionResults", "studentAnswers", "timeSpent", "submittedAt"],
+  PYQPapers:      ["id", "name", "year", "slot", "examDate", "totalDurationMinutes", "sectionDurationMinutes", "questionIds", "passageIds", "targetExam", "publishedDate", "studentsAttempted"],
+PYQQuestions:   ["id", "section", "questionText", "questionType", "options", "correctAnswer", "answerTolerance", "explanation", "difficulty", "passageId", "targetExam"],
+PYQPassages:    ["id", "title", "text", "targetExam"],
+PYQResults:     ["id", "studentId", "paperId", "totalScore", "overallScaledScore", "percentile", "sectionResults", "studentAnswers", "timeSpent", "submittedAt"],
   Announcements: ["id", "title", "content", "createdDate", "createdBy"]
   
 };
@@ -203,6 +208,7 @@ interface DB {
   unverifiedQuestions: any[];
   approvedQuestions: any[];
   dailyTests: any[];
+  dailyPassages: any[];
   testResults: any[];
   assignedTests: any[];
   announcements: any[];
@@ -214,6 +220,10 @@ sectionalResults: any[];
 mockQuestions: any[];
 mockPassages: any[];
 mockResults: any[];
+  pyqPapers: any[];
+  pyqQuestions: any[];
+  pyqPassages: any[];
+  pyqResults: any[];
 }
 
 const initialDB: DB = {
@@ -265,6 +275,7 @@ const initialDB: DB = {
   unverifiedQuestions: [],
   approvedQuestions: [],
   dailyTests: [],
+  dailyPassages: [],
   testResults: [],
   assignedTests: [],
   sectionalTests: [],
@@ -275,10 +286,14 @@ sectionalResults: [],
 mockQuestions: [],
 mockPassages: [],
 mockResults: [],
+  pyqPapers: [],
+  pyqQuestions: [],
+  pyqPassages: [],
+  pyqResults: [],
   announcements: [
     {
       id: "AN001",
-      title: "Welcome to CAT 2027 Prep",
+      title: "Welcome to CAT Prep Pro",
       content: "Good luck with your preparation!",
       createdDate: new Date().toISOString(),
       createdBy: "Admin"
@@ -291,7 +306,8 @@ function getLocalDB(): DB {
     fs.writeFileSync(DB_PATH, JSON.stringify(initialDB, null, 2));
     return initialDB;
   }
-  return JSON.parse(fs.readFileSync(DB_PATH, "utf-8"));
+  const loaded = JSON.parse(fs.readFileSync(DB_PATH, "utf-8"));
+  return { ...initialDB, ...loaded }; // fills in any keys added since the file was last written
 }
 
 function saveLocalDB(db: DB) {
@@ -471,14 +487,21 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
   app.post("/api/daily-test/publish", authenticateToken, async (req: any, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
-    const { testDate, questionIds } = req.body; // testDate format: YYYY-MM-DD
+    const { testDate, questionIds, durationMinutes, passageIds, targetExam } = req.body; // testDate format: YYYY-MM-DD
     
     if (!testDate || !questionIds || !Array.isArray(questionIds) || questionIds.length === 0) {
       return res.status(400).json({ message: "Invalid test data" });
     }
 
     const testId = `DT${Date.now()}`;
-    const newTest = { id: testId, testDate, questionIds };
+    const newTest = {
+      id: testId,
+      testDate,
+      questionIds,
+      durationMinutes: durationMinutes || 40,
+      passageIds: passageIds || [],
+      targetExam: targetExam || "CAT",
+    };
     
     await appendSheetData("DailyTests", newTest);
     
@@ -488,6 +511,30 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
     saveLocalDB(db);
     
     res.json({ success: true, testId });
+  });
+
+  // ─── Admin: POST /api/daily-passages ── add an RC passage for daily tests ──
+  app.post("/api/daily-passages", authenticateToken, async (req: any, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    try {
+      const passage = {
+        ...req.body,
+        id: req.body.id || `DP${Date.now()}`,
+        targetExam: req.body.targetExam || "CAT",
+      };
+      await appendSheetData("DailyPassages", passage);
+      const db = getLocalDB();
+      db.dailyPassages.push(passage);
+      saveLocalDB(db);
+      res.json({ success: true, passageId: passage.id });
+    } catch (err: any) {
+      res.status(500).json({ message: "Failed to add passage" });
+    }
+  });
+
+  // ─── GET /api/daily-passages ── list all daily-test passages ───────────────
+  app.get("/api/daily-passages", authenticateToken, async (req, res) => {
+    res.json(await fetchSheetData("DailyPassages") || getLocalDB().dailyPassages);
   });
 
   // Question Management
@@ -557,7 +604,10 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
     if (test) {
       const approved = await fetchSheetData("ApprovedQuestions") || getLocalDB().approvedQuestions;
       const questions = approved.filter(q => test.questionIds.includes(q.id));
-      res.json({ ...test, questions });
+      const allPassages = await fetchSheetData("DailyPassages") || getLocalDB().dailyPassages;
+      const pIds: string[] = Array.isArray(test.passageIds) ? test.passageIds : [];
+      const passages = allPassages.filter((p: any) => pIds.includes(p.id));
+      res.json({ ...test, questions, passages });
     } else {
       res.status(404).json({ message: "Test not found." });
     }
@@ -571,7 +621,10 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
     if (test) {
       const approved = await fetchSheetData("ApprovedQuestions") || getLocalDB().approvedQuestions;
       const questions = approved.filter(q => test.questionIds.includes(q.id));
-      res.json({ ...test, questions });
+      const allPassages = await fetchSheetData("DailyPassages") || getLocalDB().dailyPassages;
+      const pIds: string[] = Array.isArray(test.passageIds) ? test.passageIds : [];
+      const passages = allPassages.filter((p: any) => pIds.includes(p.id));
+      res.json({ ...test, questions, passages });
     } else {
       res.status(404).json({ message: "No test available for today." });
     }
@@ -809,6 +862,193 @@ app.get("/api/mock-questions", authenticateToken, async (req: any, res) => {
   if (req.user.role !== "admin") return res.sendStatus(403);
   const questions =
     (await fetchSheetData("MockQuestions", MOCK_SPREADSHEET_ID)) || getLocalDB().mockQuestions;
+  res.json(questions);
+});// ─── GET /api/pyq-papers  ── list of PYQ papers for this student ─────────────
+app.get("/api/pyq-papers", authenticateToken, async (req: any, res) => {
+  try {
+    let papers =
+      (await fetchSheetData("PYQPapers", MOCK_SPREADSHEET_ID)) || getLocalDB().pyqPapers;
+
+    const questions =
+      (await fetchSheetData("PYQQuestions", MOCK_SPREADSHEET_ID)) || getLocalDB().pyqQuestions;
+
+    const enriched = papers.map((p: any) => {
+      const qIds: string[] = Array.isArray(p.questionIds) ? p.questionIds : [];
+      return {
+        ...p,
+        studentsAttempted: Number(p.studentsAttempted),
+        questions: questions
+          .filter((q: any) => qIds.includes(q.id))
+          .map((q: any) => ({ id: q.id, section: q.section })), // minimal for list view
+      };
+    });
+
+    res.json(enriched);
+  } catch (err: any) {
+    res.status(500).json({ message: "Failed to load PYQ papers" });
+  }
+});
+
+// ─── GET /api/pyq-paper/:id  ── full paper with all questions + passages ─────
+app.get("/api/pyq-paper/:id", authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const papers =
+      (await fetchSheetData("PYQPapers", MOCK_SPREADSHEET_ID)) || getLocalDB().pyqPapers;
+    const paper = papers.find((p: any) => p.id === id);
+
+    if (!paper) return res.status(404).json({ message: "PYQ paper not found" });
+
+    const allQuestions =
+      (await fetchSheetData("PYQQuestions", MOCK_SPREADSHEET_ID)) || getLocalDB().pyqQuestions;
+    const allPassages =
+      (await fetchSheetData("PYQPassages", MOCK_SPREADSHEET_ID)) || getLocalDB().pyqPassages;
+
+    const qIds: string[] = Array.isArray(paper.questionIds) ? paper.questionIds : [];
+    const pIds: string[] = Array.isArray(paper.passageIds) ? paper.passageIds : [];
+
+    const questions = allQuestions.filter((q: any) => qIds.includes(q.id));
+    const passages = allPassages.filter((p: any) => pIds.includes(p.id));
+
+    res.json({ ...paper, questions, passages });
+  } catch (err: any) {
+    res.status(500).json({ message: "Failed to load PYQ paper" });
+  }
+});
+
+// ─── GET /api/pyq-results  ── this student's past PYQ attempts ───────────────
+app.get("/api/pyq-results", authenticateToken, async (req: any, res) => {
+  try {
+    const results =
+      (await fetchSheetData("PYQResults", MOCK_SPREADSHEET_ID)) || getLocalDB().pyqResults;
+    res.json(results.filter((r: any) => r.studentId === req.user.id));
+  } catch (err: any) {
+    res.status(500).json({ message: "Failed to load PYQ results" });
+  }
+});
+
+// ─── POST /api/pyq-results  ── save a completed PYQ attempt ──────────────────
+app.post("/api/pyq-results", authenticateToken, async (req: any, res) => {
+  try {
+    const { paperId } = req.body;
+
+    const allResults =
+      (await fetchSheetData("PYQResults", MOCK_SPREADSHEET_ID)) || getLocalDB().pyqResults;
+    const existing = allResults.find(
+      (r: any) => r.studentId === req.user.id && r.paperId === paperId
+    );
+    if (existing) {
+      return res.status(400).json({ message: "Already attempted this PYQ paper." });
+    }
+
+    const result = {
+      ...req.body,
+      id: `PR${Date.now()}`,
+      studentId: req.user.id,
+      submittedAt: new Date().toISOString(),
+    };
+
+    await appendSheetData("PYQResults", result, MOCK_SPREADSHEET_ID);
+
+    const db = getLocalDB();
+    db.pyqResults.push(result);
+    saveLocalDB(db);
+
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ message: "Failed to save PYQ result" });
+  }
+});
+
+// ─── Admin: POST /api/pyq-papers  ── publish a new PYQ paper ─────────────────
+app.post("/api/pyq-papers", authenticateToken, async (req: any, res) => {
+  if (req.user.role !== "admin") return res.sendStatus(403);
+  try {
+    const {
+      name,
+      year,
+      slot,
+      examDate,
+      totalDurationMinutes,
+      sectionDurationMinutes,
+      questionIds,
+      passageIds,
+      targetExam,
+    } = req.body;
+
+    if (!name || !questionIds?.length) {
+      return res.status(400).json({ message: "name and questionIds are required" });
+    }
+
+    const newPaper = {
+      id: `PYQ${Date.now()}`,
+      name,
+      year: year || "",
+      slot: slot || "",
+      examDate: examDate || "",
+      totalDurationMinutes: totalDurationMinutes || 120,
+      sectionDurationMinutes: sectionDurationMinutes || 40,
+      questionIds,
+      passageIds: passageIds || [],
+      targetExam: targetExam || "CAT",
+      publishedDate: new Date().toISOString(),
+    };
+
+    await appendSheetData("PYQPapers", newPaper, MOCK_SPREADSHEET_ID);
+
+    const db = getLocalDB();
+    db.pyqPapers.push(newPaper);
+    saveLocalDB(db);
+
+    res.json({ success: true, paperId: newPaper.id });
+  } catch (err: any) {
+    res.status(500).json({ message: "Failed to publish PYQ paper" });
+  }
+});
+
+// ─── Admin: POST /api/pyq-questions  ── add questions ─────────────────────────
+app.post("/api/pyq-questions", authenticateToken, async (req: any, res) => {
+  if (req.user.role !== "admin") return res.sendStatus(403);
+  try {
+    const questions: any[] = req.body.questions;
+    for (const q of questions) {
+      const newQ = {
+        ...q,
+        id: q.id || `PYQQ${Date.now()}${Math.random().toString(36).substr(2, 4)}`,
+        questionType: q.questionType === "TITA" ? "TITA" : "MCQ",
+        options: q.questionType === "TITA" ? [] : (q.options || []),
+      };
+      await appendSheetData("PYQQuestions", newQ, MOCK_SPREADSHEET_ID);
+      const db = getLocalDB();
+      db.pyqQuestions.push(newQ);
+      saveLocalDB(db);
+    }
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ message: "Failed to add PYQ questions" });
+  }
+});
+
+// ─── Admin: POST /api/pyq-passages  ── add RC passages ────────────────────────
+app.post("/api/pyq-passages", authenticateToken, async (req: any, res) => {
+  if (req.user.role !== "admin") return res.sendStatus(403);
+  try {
+    const passage = { ...req.body, id: req.body.id || `PYQP${Date.now()}` };
+    await appendSheetData("PYQPassages", passage, MOCK_SPREADSHEET_ID);
+    const db = getLocalDB();
+    db.pyqPassages.push(passage);
+    saveLocalDB(db);
+    res.json({ success: true, passageId: passage.id });
+  } catch (err: any) {
+    res.status(500).json({ message: "Failed to add PYQ passage" });
+  }
+});
+
+// ─── Admin: GET /api/pyq-questions  ── list all PYQ questions ────────────────
+app.get("/api/pyq-questions", authenticateToken, async (req: any, res) => {
+  if (req.user.role !== "admin") return res.sendStatus(403);
+  const questions =
+    (await fetchSheetData("PYQQuestions", MOCK_SPREADSHEET_ID)) || getLocalDB().pyqQuestions;
   res.json(questions);
 });
 // ─── GET /api/sectional-test/:id  ── full test with questions + passages ─────
